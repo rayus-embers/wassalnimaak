@@ -8,7 +8,7 @@ class CovoiturageSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Covoiturage
-        fields = ['id', 'departure_id', 'destination_id', 'addresses', 'available_seats', 'options', 'price', 'driver']
+        fields = ['id', 'departure_id', 'time', 'destination_id', 'addresses', 'available_seats', 'options', 'price', 'driver']
 
 class StatusSerializer(serializers.ModelSerializer):
     class Meta:

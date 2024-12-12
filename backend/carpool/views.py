@@ -20,7 +20,7 @@ class CovoiturageViewSet(ModelViewSet):
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ['available_seats', 'price', 'options__id']
     search_fields = ['addresses']
-    ordering_fields = ['price', 'available_seats']
+    ordering_fields = ['price', 'available_seats', 'time']
     ordering = ['price']
 
     def get_permissions(self):

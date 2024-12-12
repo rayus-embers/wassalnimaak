@@ -135,32 +135,32 @@ class ChangePasswordAPI(generics.GenericAPIView):
 
 class DriverDetail(APIView):
     authentication_classes = [JWTAuthentication]
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, pk, format=None):
         try:
             driver = Driver.objects.get(pk=pk)
         except Driver.DoesNotExist:
             raise NotFound({"detail": "Driver not found."})
-
-        car_picture_url = (
-            driver.car_picture.url if driver.car_picture else "/media/default_car.jpg"
-        )
-
-        driving_licence_picture_url = (
-            driver.driving_licence_picture.url
-            if driver.driving_licence_picture
-            else "/media/default_driving_licence.jpg"
-        )
+        if  not driver.driving_licence_picture:
+            return Response({
+                "username": driver.user.username,
+                "rating": driver.rating,
+                "profilepicture": driver.user.profile_picture.url,
+                "phonenumber": driver.user.phone_number,
+                "verified": driver.verified,
+                "banned": driver.banned,
+            })
+        
 
         return Response({
             "username": driver.user.username,
             "rating": driver.rating,
-            "car_type": driver.cartype,
+            "phonenumber": driver.user.phone_number,
             "verified": driver.verified,
             "banned": driver.banned,
-            "car_picture": car_picture_url,
-            "driving_licence_picture": driving_licence_picture_url,
+            "profilepicture": driver.user.profile_picture.url,
+            "driving_licence_picture": driver.driving_licence_picture.url,
         })
 
 class CarViewSet(viewsets.ModelViewSet):

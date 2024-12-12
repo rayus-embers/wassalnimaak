@@ -1,5 +1,6 @@
 from django.db import models
 from core.models import Driver,User
+
 # Create your models here.
 
 class Option(models.Model):
@@ -12,6 +13,7 @@ class Covoiturage(models.Model):
     departure_id = models.PositiveIntegerField()
     destination_id = models.PositiveIntegerField()
     addresses = models.JSONField()
+    time = models.DateTimeField()
     available_seats = models.PositiveIntegerField()
     options = models.ManyToManyField(Option, related_name='covoiturages', blank=True)
     price = models.FloatField()
