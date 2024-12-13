@@ -5,8 +5,8 @@ from .views import CovoiturageViewSet, StatusViewSet, PaymentViewSet, FeedbackVi
 router = DefaultRouter()
 router.register(r'covoiturages', CovoiturageViewSet)
 router.register(r'statuses', StatusViewSet)
+router.register(r'feedback', FeedbackViewSet, basename='feedback')
 router.register(r'payments', PaymentViewSet)
-router.register(r'feedbacks', FeedbackViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),

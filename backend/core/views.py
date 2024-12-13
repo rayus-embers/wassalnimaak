@@ -1,11 +1,13 @@
 from django.shortcuts import render
 from rest_framework import viewsets
 from rest_framework.views import APIView
+from django.db.models import Avg, Count
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import generics, mixins, status
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from .models import User, Driver, Car
+from carpool.models import Feedback
 from rest_framework_simplejwt.tokens import RefreshToken
 from .serializers import CarSerializer, RegisterSerializer, UserSerializer, RegisterDriverSerializer, DriverSerializer, ChangePassowrdSerializer, UserProfileSerializer
 # Create your views here.
@@ -140,6 +142,11 @@ class DriverDetail(APIView):
     def get(self, request, pk, format=None):
         try:
             driver = Driver.objects.get(pk=pk)
+            if Feedback.objects.filter(about=driver):
+                stats = Feedback.objects.filter(about=driver).aggregate(Avg('rating'))
+            else:
+                stats = 0.0
+            count = Feedback.objects.filter(about=driver).aggregate(Count('rating'))
         except Driver.DoesNotExist:
             raise NotFound({"detail": "Driver not found."})
         if  not driver.driving_licence_picture:
@@ -148,6 +155,8 @@ class DriverDetail(APIView):
                 "rating": driver.rating,
                 "profilepicture": driver.user.profile_picture.url,
                 "phonenumber": driver.user.phone_number,
+                "rating":stats,
+                "count":count,
                 "verified": driver.verified,
                 "banned": driver.banned,
             })
@@ -159,6 +168,8 @@ class DriverDetail(APIView):
             "phonenumber": driver.user.phone_number,
             "verified": driver.verified,
             "banned": driver.banned,
+            "rating":stats,
+            "count":count,
             "profilepicture": driver.user.profile_picture.url,
             "driving_licence_picture": driver.driving_licence_picture.url,
         })
