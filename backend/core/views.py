@@ -19,9 +19,11 @@ class Home(APIView):
         """
         Return your username, user id
         """
+        isdriver = hasattr(request.user, 'driver')
         return Response({
             "username":request.user.username,
             "id":request.user.pk,
+            "isdriver":isdriver
         })
 
 class RegisterApi(generics.GenericAPIView):
@@ -149,11 +151,10 @@ class DriverDetail(APIView):
             count = Feedback.objects.filter(about=driver).aggregate(Count('rating'))
         except Driver.DoesNotExist:
             raise NotFound({"detail": "Driver not found."})
-        if  not driver.driving_licence_picture:
+        if  not driver.user.profile_picture:
             return Response({
                 "username": driver.user.username,
                 "rating": driver.rating,
-                "profilepicture": driver.user.profile_picture.url,
                 "phonenumber": driver.user.phone_number,
                 "rating":stats,
                 "count":count,
@@ -171,7 +172,6 @@ class DriverDetail(APIView):
             "rating":stats,
             "count":count,
             "profilepicture": driver.user.profile_picture.url,
-            "driving_licence_picture": driver.driving_licence_picture.url,
         })
 
 class CarViewSet(viewsets.ModelViewSet):
