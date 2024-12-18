@@ -18,22 +18,20 @@ def feedback_posted(sender, instance, created, **kwargs):
 
 # Signal for when a user applies for a ride
 @receiver(post_save, sender=Status)
-def status_applied(sender, instance, created, **kwargs):
+def handle_status_change(sender, instance, created, **kwargs):
+    # Notify driver when a new pending application is created
     if created and instance.status == 'PENDING':
         driver = instance.covoiturage.driver
-        notification = Notification(
-            user=driver.user,
-            message=f"User {instance.passenger.username} has applied for your ride."
+        Notification.objects.create(
+            user=driver,
+            message=f"User {instance.passenger.username} has applied for your ride for {instance.seats_reserved} seats."
         )
-        notification.save()
-
-# Signal for when a user's status changes to 'CONFIRMED'
-@receiver(post_save, sender=Status)
-def status_confirmed(sender, instance, **kwargs):
-    if instance.status == 'CONFIRMED':
+    
+    # Notify passenger when status changes to 'CONFIRMED'
+    elif instance.status == 'CONFIRMED':
         passenger = instance.passenger
-        notification = Notification(
+        Notification.objects.create(
             user=passenger,
-            message=f"Your ride has been confirmed!"
+            message=f"Your ride with {instance.driver.user.username} has been confirmed!"
         )
-        notification.save()
+

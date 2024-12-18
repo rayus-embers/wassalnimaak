@@ -12,7 +12,7 @@ class Option(models.Model):
 class Covoiturage(models.Model):
     departure_id = models.PositiveIntegerField()
     destination_id = models.PositiveIntegerField()
-    addresses = models.JSONField()
+    addresses = models.JSONField(null = True, blank=True)
     time = models.DateTimeField()
     available_seats = models.PositiveIntegerField()
     options = models.ManyToManyField(Option, related_name='covoiturages', blank=True)
@@ -30,19 +30,34 @@ class Status(models.Model):
         ('CONFIRMED', 'Confirmed'),
         ('CANCELLED', 'Cancelled'),
     ]
-    
+
     covoiturage = models.ForeignKey(Covoiturage, related_name="statuses", on_delete=models.CASCADE)
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='PENDING')
     passenger = models.ForeignKey(User, related_name="statuses", on_delete=models.CASCADE)
+    seats_reserved = models.PositiveIntegerField(default=1)  # Number of seats passenger wants to reserve
     confirmation_date = models.DateTimeField(null=True, blank=True)
 
+    def cancel_pending_statuses(self):
+        if self.covoiturage.available_seats == 0:
+            Status.objects.filter(covoiturage=self.covoiturage, status='PENDING').update(status='CANCELLED')
+
     def save(self, *args, **kwargs):
-        if self.status == 'CONFIRMED' and self.confirmation_date is None:
-            self.confirmation_date = models.DateTimeField(auto_now=True)  # Automatically set confirmation date
+        if self.status == 'CONFIRMED':
+            # Handle confirmation date and seat reduction
+            if self.confirmation_date is None:
+                self.confirmation_date = models.DateTimeField(auto_now=True)
+
+            if self.covoiturage.available_seats < self.seats_reserved:
+                raise ValidationError(f"Only {self.covoiturage.available_seats} seats are available.")
+
+            self.covoiturage.available_seats -= self.seats_reserved
+            self.covoiturage.save()
+
+            # Cancel pending statuses after confirming
+            self.cancel_pending_statuses()
+
         super().save(*args, **kwargs)
 
-    def __str__(self):
-        return f"{self.status} - Covoiturage ID: {self.covoiturage.id} - Passenger: {self.passenger.username}"
 
 
 class Payment(models.Model):
@@ -60,5 +75,5 @@ class Feedback(models.Model):
     comment = models.TextField(blank=True, null=True) 
 
     def __str__(self):
-        return f"Feedback by {self.author.username} about {self.about.username} - Rating: {self.rating}"
+        return f"Feedback by {self.author.username} about {self.about.user.username} - Rating: {self.rating}"
 
